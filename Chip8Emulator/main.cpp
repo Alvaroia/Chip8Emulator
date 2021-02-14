@@ -2,32 +2,73 @@
 #include <fstream>
 #include <memory>
 #include <array>
+#include <string>
+
+#include "cpu.h"
+//#include <SFML/Graphics.hpp>
+
 
 
 int main() {
 
-	std::array<uint8_t, 4096> memory;
-	std::ifstream program("IBM Logo.ch8", std::ios::in | std::ios::binary | std::ios::ate);
+	cpu chip8;
 
-	if (!program.is_open()) {
-		throw(std::invalid_argument("Error opening ch8 program\n"));
-	}
+	chip8.load("IBM Logo.ch8");
 
-	//File has been open by the end (ios::ate option)
-	//tellg return the position in the file (the end in this case which is equal to the file size)
-	int size = program.tellg();
+	uint8_t delayTimer = 0x0;
+	uint8_t soundTimer = 0x0;
 
-	//seekg return the file pointer to the beggining of the file so we can read it as usual.
-	program.seekg(0, std::ios::beg);
-
-	program.read(reinterpret_cast<char*>(&memory[0x200]), size);
-
-	int programCounter = 0x200; //Addres 512
-
-	while (true) {
+	while (chip8.window.isOpen()) {
 		//Fetch
+		uint16_t instr = chip8.fetch();
 		//Decode
+		chip8.decode(instr);
 		//Execute
+
+		sf::Event event;
+		while (chip8.window.pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+				chip8.window.close();
+		}
+
+		chip8.window.clear();
+
+		for (size_t row = 0; row < 32; ++row) {
+			for (size_t col = 0; col < 64; ++col) {
+				if (chip8.screen[row * 64 + col]) {
+					sf::RectangleShape pixel(sf::Vector2f(4, 4));
+					pixel.setPosition(std::floor(col * 4), std::floor(row * 4));
+					pixel.setFillColor(sf::Color::White);
+					chip8.window.draw(pixel);
+				}
+			}
+		}
+
+
+		for (size_t col = 0; col < 64*4; col+=4) {
+			sf::Vertex line[] =
+			{
+				sf::Vertex(sf::Vector2f(col, 0), sf::Color::Black),
+				sf::Vertex(sf::Vector2f(col, 32*4), sf::Color::Black)
+			};
+
+			chip8.window.draw(line, 2, sf::Lines);
+		}
+
+		for (size_t row = 0; row < 32 * 4; row += 4) {
+			sf::Vertex line[] =
+			{
+				sf::Vertex(sf::Vector2f(0, row), sf::Color::Black),
+				sf::Vertex(sf::Vector2f(64*4, row), sf::Color::Black)
+			};
+
+			chip8.window.draw(line, 2, sf::Lines);
+		}
+
+
+
+		chip8.window.display();
 	}
 
 	return 0;
