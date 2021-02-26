@@ -29,9 +29,9 @@ public:
 	/// Execute instruction
 
 
-	uint8_t delayTimer = 0x0;
+	uint8_t delayTimer = 0x00;
 
-	uint8_t soundTimer = 0x0;
+	uint8_t soundTimer = 0x00;
 
 	/// Black 0, white 1
 	std::array<bool, 64 * 32> screen;

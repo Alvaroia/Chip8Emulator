@@ -1,10 +1,11 @@
 #include "cpu.h"
 #include <SFML/Graphics.hpp> //This order is important https://en.sfml-dev.org/forums/index.php?topic=25059.0
-#include <windows.h> // WinApi header 
+//#include <windows.h> // WinApi header 
 
 
 #include <iostream>
 #include <fstream>
+#include<cmath>
 #include <memory>
 #include <array>
 #include <string>
@@ -30,7 +31,7 @@ int main() {
 
 	cpu chip8;
 
-	chip8.load("./ROMS/SpaceFlight.ch8");
+	chip8.load("./ROMS/Pong.ch8");
 
 	auto previous_cpu_time = std::chrono::high_resolution_clock::now();
 	double remainingTime = 0.0;
@@ -42,9 +43,9 @@ int main() {
 	// keypadTest.ch8 [X]
 	// DelayTimerTest [?]
 	// DivisionTest.ch8 [?]
-	// HiresTest.ch8 (HIRES shouldn't work)
+	// HiresTest.ch8 (HI-RESolution shouldn't work)
 	// Pong.ch8 [X]
-	// SpaceFlight doesnt work
+	// SpaceFlight [X]
 
 	//Sound processing moved to another thread to avoid delay in main loop
 	//std::thread beepThread(
@@ -70,7 +71,7 @@ int main() {
 		using namespace std::chrono;
 		auto current_cpu_time = high_resolution_clock::now();
 
-		auto elapsedTime = duration_cast<milliseconds>(current_cpu_time - previous_cpu_time);
+		auto elapsedTime = duration_cast<microseconds>(current_cpu_time - previous_cpu_time);
 
 		previous_cpu_time = current_cpu_time;
 
@@ -84,7 +85,7 @@ int main() {
 		else
 		{
 			std::cerr << "FPS "	
-				<< 1 / (std::accumulate(elapsedTimes.begin(), elapsedTimes.end(), 0.0) / elapsedTimes.size() / 1000) 
+				<< 1.0 / (std::accumulate(elapsedTimes.begin(), elapsedTimes.end(), 0.0) / elapsedTimes.size() / 1e6) 
 				<< "\n";
 			frame_cont = 0;
 		}
@@ -124,29 +125,42 @@ int main() {
 			}
 		}
 
-		//for (size_t col = 0; col < 64*4; col+=4) {
-		//	sf::Vertex line[] =
-		//	{
-		//		sf::Vertex(sf::Vector2f(col, 0), sf::Color::Black),
-		//		sf::Vertex(sf::Vector2f(col, 32*4), sf::Color::Black)
-		//	};
+		for (size_t col = 0; col < 64*4; col+=4) {
+			sf::Vertex line[] =
+			{
+				sf::Vertex(sf::Vector2f(col, 0), sf::Color::Black),
+				sf::Vertex(sf::Vector2f(col, 32*4), sf::Color::Black)
+			};
 
-		//	window.draw(line, 2, sf::Lines);
-		//}
+			window.draw(line, 2, sf::Lines);
+		}
 
-		//for (size_t row = 0; row < 32 * 4; row += 4) {
-		//	sf::Vertex line[] =
-		//	{
-		//		sf::Vertex(sf::Vector2f(0, row), sf::Color::Black),
-		//		sf::Vertex(sf::Vector2f(64*4, row), sf::Color::Black)
-		//	};
+		for (size_t row = 0; row < 32 * 4; row += 4) {
+			sf::Vertex line[] =
+			{
+				sf::Vertex(sf::Vector2f(0, row), sf::Color::Black),
+				sf::Vertex(sf::Vector2f(64*4, row), sf::Color::Black)
+			};
 
-		//	window.draw(line, 2, sf::Lines);
-		//}
-
-
+			window.draw(line, 2, sf::Lines);
+		}
 
 		window.display();
+
+		//const int minInstructionTime = std::round(1.0 / 700.0 * 1e6); //ms
+		//const auto minInstructionTimeMS = std::chrono::microseconds(minInstructionTime);
+
+		//auto current_cpu_time2 = high_resolution_clock::now();
+
+
+		//auto loopTime = duration_cast<microseconds>(current_cpu_time2 - current_cpu_time);
+
+
+		//if(loopTime < minInstructionTimeMS)
+		//{
+		//	std::this_thread::sleep_for(minInstructionTimeMS - loopTime);
+		//}
+
 	}
 
 	//beepThread.join();
@@ -176,7 +190,9 @@ void handleKeyboardEvent(const sf::Event& event, cpu& chip8) {
 		sf::Keyboard::V
 	};
 
-	if (event.type == sf::Event::KeyPressed && std::find(keyList.begin(), keyList.end(), event.key.code) != keyList.end())
+	if (event.type == sf::Event::KeyPressed 
+		&& 
+		std::find(keyList.begin(), keyList.end(), event.key.code) != keyList.end())
 	{
 		switch (event.key.code) {
 		case(sf::Keyboard::Num1):
@@ -238,12 +254,5 @@ void handleKeyboardEvent(const sf::Event& event, cpu& chip8) {
 	{
 		chip8.keyPressed = false;
 		chip8.keyReleased = true;
-	}
-}
-
-void makeBeep(const uint8_t soundTimer) {
-	if (static_cast<int>(soundTimer) != 0) {
-		// This pause the processing
-		Beep(523, 500); // 523 hertz (C5) for 500 milliseconds
 	}
 }

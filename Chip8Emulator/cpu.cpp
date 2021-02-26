@@ -481,6 +481,5 @@ double cpu::updateTimers(const double elapsedTime) {
 	soundTimer = std::max(0, soundTimer - numberTics);
 	delayTimer = std::max(0, delayTimer - numberTics);
 
-
 	return remainingTime;
 }
