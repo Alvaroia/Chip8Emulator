@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "Gui.h"
 #include <SFML/Graphics.hpp> //This order is important https://en.sfml-dev.org/forums/index.php?topic=25059.0
 //#include <windows.h> // WinApi header 
 
@@ -31,7 +32,10 @@ int main() {
 
 	cpu chip8;
 
-	chip8.load("./ROMS/Pong.ch8");
+	Gui<32, 64> screen(&chip8.screen, 16, std::string("CHIP-8"));
+
+
+	chip8.load("./ROMS/DelayTimerTest.ch8");
 
 	auto previous_cpu_time = std::chrono::high_resolution_clock::now();
 	double remainingTime = 0.0;
@@ -57,15 +61,13 @@ int main() {
 	//	}
 	//});
 
-	sf::RenderWindow window(sf::VideoMode(64 * 4, 32 * 4, 1), "CHIP-8");
-	window.setSize({ 64 * 16 , 32 * 16 });
 
 	std::array<double, 1000> elapsedTimes;
 	std::fill(elapsedTimes.begin(), elapsedTimes.end(), 0);
 
 	int frame_cont{ 0 };
 	
-	while (window.isOpen()) {
+	while (screen.window.isOpen()) {
 
 		// Update timers
 		using namespace std::chrono;
@@ -101,65 +103,34 @@ int main() {
 		chip8.decode(instr);
 
 
+		// Handle events
 		sf::Event event;
-		while (window.pollEvent(event))
+		while (screen.window.pollEvent(event))
 		{
 			if (event.type == sf::Event::Closed) {
 				programEnd = true;
-				window.close();
+				screen.window.close();
 			}
 
 			handleKeyboardEvent(event, chip8);
 		}
 
-		window.clear();
+		screen.draw();
 
-		for (size_t row = 0; row < 32; ++row) {
-			for (size_t col = 0; col < 64; ++col) {
-				if (chip8.screen[row * 64 + col]) {
-					sf::RectangleShape pixel(sf::Vector2f(4, 4));
-					pixel.setPosition(std::floor(col * 4), std::floor(row * 4));
-					pixel.setFillColor(sf::Color::White);
-					window.draw(pixel);
-				}
-			}
+		const int minInstructionTime = std::round(1.0 / 1200 * 1e6); //us
+
+		const auto minInstructionTimeMS = std::chrono::microseconds(minInstructionTime);
+
+		auto current_cpu_time2 = high_resolution_clock::now();
+
+
+		auto loopTime = duration_cast<microseconds>(current_cpu_time2 - current_cpu_time);
+
+
+		if(loopTime < minInstructionTimeMS)
+		{
+			std::this_thread::sleep_for(minInstructionTimeMS - loopTime);
 		}
-
-		for (size_t col = 0; col < 64*4; col+=4) {
-			sf::Vertex line[] =
-			{
-				sf::Vertex(sf::Vector2f(col, 0), sf::Color::Black),
-				sf::Vertex(sf::Vector2f(col, 32*4), sf::Color::Black)
-			};
-
-			window.draw(line, 2, sf::Lines);
-		}
-
-		for (size_t row = 0; row < 32 * 4; row += 4) {
-			sf::Vertex line[] =
-			{
-				sf::Vertex(sf::Vector2f(0, row), sf::Color::Black),
-				sf::Vertex(sf::Vector2f(64*4, row), sf::Color::Black)
-			};
-
-			window.draw(line, 2, sf::Lines);
-		}
-
-		window.display();
-
-		//const int minInstructionTime = std::round(1.0 / 700.0 * 1e6); //ms
-		//const auto minInstructionTimeMS = std::chrono::microseconds(minInstructionTime);
-
-		//auto current_cpu_time2 = high_resolution_clock::now();
-
-
-		//auto loopTime = duration_cast<microseconds>(current_cpu_time2 - current_cpu_time);
-
-
-		//if(loopTime < minInstructionTimeMS)
-		//{
-		//	std::this_thread::sleep_for(minInstructionTimeMS - loopTime);
-		//}
 
 	}
 

@@ -7,7 +7,7 @@ cpu::cpu()
 {
 
 	/// Init screen as black
-	screen.fill(false);
+	std::fill(&screen[0][0], &screen[31][63]+1, false);
 	loadFonts();
 
 	std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -61,7 +61,7 @@ void cpu::decode(const uint16_t instruction) {
 		case 0x0:
 			// Clear screen
 			//std::cout << "00E0 Clear screen\n";
-			screen.fill(false);
+			std::fill(&screen[0][0], &screen[31][63] + 1, false);
 			break;
 		case 0xE:
 			// Return from subroutine
@@ -294,11 +294,11 @@ void cpu::decode(const uint16_t instruction) {
 					uint16_t x_pos = x + column;
 
 					// If pixel turned off activate VF flag
-					if (screen[y_pos * 64 + x_pos]) { // Could this be optimized?
+					if (screen[y_pos][x_pos]) { // Could this be optimized?
 						registers[0xF] = 1;
 					}
 
-					screen[y_pos * 64 + x_pos] = !screen[y_pos * 64 + x_pos];
+					screen[y_pos][x_pos] = !screen[y_pos][x_pos];
 
 				}
 			}

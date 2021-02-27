@@ -34,7 +34,7 @@ public:
 	uint8_t soundTimer = 0x00;
 
 	/// Black 0, white 1
-	std::array<bool, 64 * 32> screen;
+	std::array<std::array<bool, 64>, 32> screen;
 
 	/// keyCode of the last key pressed
 	/// Posible values from 0x0 to 0xF
