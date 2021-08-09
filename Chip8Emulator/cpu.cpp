@@ -437,10 +437,7 @@ void cpu::decode(const uint16_t instruction) {
 		//halt?
 		break;
 	}
-
-
-
-
+	 
 
 }
 
